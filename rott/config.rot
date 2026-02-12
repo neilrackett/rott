@@ -31,12 +31,12 @@ CrossHair          1
 ;
 ; 1 - Joystick Enabled
 ; 0 - Joystick Disabled
-JoystickEnabled    0
+JoystickEnabled    1
 
 ;
 ; 1 - Joypad Enabled
 ; 0 - Joypad Disabled
-JoypadEnabled      0
+JoypadEnabled      1
 
 ;
 ; 0 - Use Joystick Port 1

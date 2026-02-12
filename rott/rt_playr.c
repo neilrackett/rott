@@ -2293,6 +2293,9 @@ void PollJoystickMove (void)
 {
    int   joyx,joyy;
 
+   if ((joystickport < 0) || (joystickport >= MaxJoys))
+      joystickport = 0;
+
    INL_GetJoyDelta (joystickport, &joyx, &joyy);
    if ( joypadenabled )
       {
@@ -6383,6 +6386,5 @@ void  T_Player (objtype *ob)
 #endif
 
 }
-
 
 

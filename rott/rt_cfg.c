@@ -697,6 +697,25 @@ boolean ParseConfigFile (void)
       if (!MousePresent)
          mouseenabled = false;
 
+#ifdef __EMSCRIPTEN__
+      if ((joystickport < 0) || (joystickport >= MaxJoys))
+         joystickport = 0;
+
+      /* Browser gamepads do not use legacy calibration values from CONFIG.ROT. */
+      if ((!joyxmax) || (!joyymax) || (joyxmin == joyxmax) || (joyymin == joyymax))
+      {
+         joyxmin = 0;
+         joyxmax = 5000;
+         joyymin = 0;
+         joyymax = 5000;
+      }
+
+      if (joystickenabled)
+      {
+         JoysPresent[joystickport] = true;  /* allow late gamepad connect */
+         IN_SetupJoy (joystickport, joyxmin, joyxmax, joyymin, joyymax);
+      }
+#else
       if (!JoysPresent[joystickport])
          joystickenabled = false;
 
@@ -707,6 +726,7 @@ boolean ParseConfigFile (void)
 
       if (joystickenabled)
          IN_SetupJoy (joystickport, joyxmin, joyxmax, joyymin, joyymax);
+#endif
    }
    else
       retval = false;

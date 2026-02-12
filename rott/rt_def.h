@@ -251,9 +251,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //***************************************************************************
 
+#if defined(__EMSCRIPTEN__)
+#define MaxJoys            2
+#else
 #define MaxJoys            0
+#endif
 #define MaxKbds            2
-#define MaxJoys            0
 #define NumCodes           128
 
 // Key definitions

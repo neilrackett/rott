@@ -42,6 +42,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "memcheck.h"
 #include "keyb.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/html5.h>
+#endif
+
 #define MAXMESSAGELENGTH      (COM_MAXTEXTSTRINGLENGTH-1)
 
 //****************************************************************************
@@ -141,6 +145,16 @@ static KeyboardDef KbdDefs = {0x1d,0x38,0x47,0x48,0x49,0x4b,0x4d,0x4f,0x50,0x51}
 static JoystickDef JoyDefs[MaxJoys];
 static ControlType Controls[MAXPLAYERS];
 
+#if MaxJoys > 0
+#define IN_INTERNAL_MAX_JOYS MaxJoys
+#else
+#define IN_INTERNAL_MAX_JOYS 1
+#endif
+
+static word JoyAbsX[IN_INTERNAL_MAX_JOYS];
+static word JoyAbsY[IN_INTERNAL_MAX_JOYS];
+static word JoyButtonsState[IN_INTERNAL_MAX_JOYS];
+
 
 static boolean  IN_Started;
 
@@ -155,6 +169,152 @@ int (far *function_ptr)();
 
 static char *ParmStrings[] = {"nojoys","nomouse","spaceball","cyberman","assassin",NULL};
 
+static int INL_NormalizeJoyIndex(word joy)
+{
+   int idx = (int) joy;
+   if ((idx < 0) || (idx >= MaxJoys))
+      return 0;
+   return idx;
+}
+
+#ifdef __EMSCRIPTEN__
+static boolean emscripten_gamepad_callbacks_registered = false;
+
+static word INL_ClampWord(int value, int low, int high)
+{
+   if (value < low)
+      value = low;
+   else if (value > high)
+      value = high;
+   return (word) value;
+}
+
+static word INL_MapGamepadAxis(double value)
+{
+   int scaled = (int) (((value + 1.0) * (double) MaxJoyValue) * 0.5);
+   return INL_ClampWord(scaled, 0, MaxJoyValue);
+}
+
+static word INL_MapGamepadButtons(const EmscriptenGamepadEvent *pad)
+{
+   word bits = 0;
+
+   if (pad->numButtons > 0 && pad->digitalButton[0]) bits |= 1;
+   if (pad->numButtons > 1 && pad->digitalButton[1]) bits |= 2;
+   if (pad->numButtons > 2 && pad->digitalButton[2]) bits |= 4;
+   if (pad->numButtons > 3 && pad->digitalButton[3]) bits |= 8;
+
+   /* Shoulder buttons are useful fallbacks for some browser mappings. */
+   if (pad->numButtons > 4 && pad->digitalButton[4]) bits |= 2;
+   if (pad->numButtons > 5 && pad->digitalButton[5]) bits |= 1;
+
+   return bits;
+}
+
+static EM_BOOL INL_OnGamepadConnectEvent(int eventType,
+                                         const EmscriptenGamepadEvent *gamepadEvent,
+                                         void *userData)
+{
+   (void) eventType;
+   (void) gamepadEvent;
+   (void) userData;
+   JoysPresent[0] = true;
+   return EM_FALSE;
+}
+
+static EM_BOOL INL_OnGamepadDisconnectEvent(int eventType,
+                                            const EmscriptenGamepadEvent *gamepadEvent,
+                                            void *userData)
+{
+   int index;
+
+   (void) eventType;
+   (void) userData;
+
+   if (gamepadEvent == NULL)
+      return EM_FALSE;
+
+   index = gamepadEvent->index;
+   if ((index >= 0) && (index < MaxJoys))
+   {
+      JoyButtonsState[index] = 0;
+      JoyAbsX[index] = MaxJoyValue / 2;
+      JoyAbsY[index] = MaxJoyValue / 2;
+   }
+
+   return EM_FALSE;
+}
+
+static void INL_UpdateJoyState(void)
+{
+   int joy;
+   int numpads = 0;
+   EMSCRIPTEN_RESULT sample_status;
+
+   if (!emscripten_gamepad_callbacks_registered)
+   {
+      emscripten_set_gamepadconnected_callback(NULL, 0, INL_OnGamepadConnectEvent);
+      emscripten_set_gamepaddisconnected_callback(NULL, 0, INL_OnGamepadDisconnectEvent);
+      emscripten_gamepad_callbacks_registered = true;
+   }
+
+   sample_status = emscripten_sample_gamepad_data();
+   if (sample_status != EMSCRIPTEN_RESULT_SUCCESS)
+   {
+      Joy_x = JoyAbsX[0];
+      Joy_y = JoyAbsY[0];
+      return;
+   }
+
+   numpads = emscripten_get_num_gamepads();
+   if (numpads < 0)
+      numpads = 0;
+
+   for (joy = 0; joy < MaxJoys; joy++)
+   {
+      EmscriptenGamepadEvent pad;
+      EMSCRIPTEN_RESULT status = EMSCRIPTEN_RESULT_NOT_SUPPORTED;
+
+      JoyButtonsState[joy] = 0;
+      JoyAbsX[joy] = MaxJoyValue / 2;
+      JoyAbsY[joy] = MaxJoyValue / 2;
+
+      if (joy < numpads)
+         status = emscripten_get_gamepad_status(joy, &pad);
+
+      if ((status == EMSCRIPTEN_RESULT_SUCCESS) && pad.connected)
+      {
+         int dpad_up = (pad.numButtons > 12) ? pad.digitalButton[12] : 0;
+         int dpad_down = (pad.numButtons > 13) ? pad.digitalButton[13] : 0;
+         int dpad_left = (pad.numButtons > 14) ? pad.digitalButton[14] : 0;
+         int dpad_right = (pad.numButtons > 15) ? pad.digitalButton[15] : 0;
+
+         JoysPresent[joy] = true;
+
+         if (pad.numAxes > 0)
+            JoyAbsX[joy] = INL_MapGamepadAxis(pad.axis[0]);
+         else if (dpad_left || dpad_right)
+            JoyAbsX[joy] = dpad_left ? 0 : MaxJoyValue;
+
+         if (pad.numAxes > 1)
+            JoyAbsY[joy] = INL_MapGamepadAxis(pad.axis[1]);
+         else if (dpad_up || dpad_down)
+            JoyAbsY[joy] = dpad_up ? 0 : MaxJoyValue;
+
+         JoyButtonsState[joy] = INL_MapGamepadButtons(&pad);
+      }
+   }
+
+   JoyPadPresent = JoysPresent[0];
+   Joy_x = JoyAbsX[0];
+   Joy_y = JoyAbsY[0];
+}
+#else
+static void INL_UpdateJoyState(void)
+{
+}
+#endif
+
 
 
 
@@ -166,6 +326,7 @@ static char *ParmStrings[] = {"nojoys","nomouse","spaceball","cyberman","assassi
 void IN_PumpEvents(void)
 {
     doEvents();
+    INL_UpdateJoyState();
 }
 
 
@@ -247,10 +408,15 @@ void IN_IgnoreMouseButtons
 
 void IN_GetJoyAbs (word joy, word *xp, word *yp)
 {
- 
+   int idx;
 
-   *xp = Joy_x;
-   *yp = Joy_y;
+   INL_UpdateJoyState();
+   idx = INL_NormalizeJoyIndex(joy);
+
+   Joy_x = JoyAbsX[idx];
+   Joy_y = JoyAbsY[idx];
+   *xp = JoyAbsX[idx];
+   *yp = JoyAbsY[idx];
 }
 
 void JoyStick_Vals (void)
@@ -269,11 +435,20 @@ void JoyStick_Vals (void)
 void INL_GetJoyDelta (word joy, int *dx, int *dy)
 {
    word        x, y;
+   int         idx;
    JoystickDef *def;
    static longword lasttime;
 
-   IN_GetJoyAbs (joy, &x, &y);
-   def = JoyDefs + joy;
+   idx = INL_NormalizeJoyIndex(joy);
+   if (!JoysPresent[idx])
+   {
+      *dx = 0;
+      *dy = 0;
+      return;
+   }
+
+   IN_GetJoyAbs ((word)idx, &x, &y);
+   def = JoyDefs + idx;
 
    if (x < def->threshMinX)
    {
@@ -335,10 +510,11 @@ void INL_GetJoyDelta (word joy, int *dx, int *dy)
 
 word INL_GetJoyButtons (word joy)
 {
-   word  result = 0;
- 
+   int idx;
 
-   return result;
+   INL_UpdateJoyState();
+   idx = INL_NormalizeJoyIndex(joy);
+   return JoyButtonsState[idx];
 }
 
 #if 0
@@ -392,9 +568,18 @@ boolean INL_StartMouse (void)
 
 void INL_SetJoyScale (word joy)
 {
+   int idx;
    JoystickDef *def;
 
-   def = &JoyDefs[joy];
+   idx = INL_NormalizeJoyIndex(joy);
+   def = &JoyDefs[idx];
+
+   if ((def->threshMinX == def->joyMinX) ||
+       (def->joyMaxX == def->threshMaxX) ||
+       (def->threshMinY == def->joyMinY) ||
+       (def->joyMaxY == def->threshMaxY))
+      return;
+
    def->joyMultXL = JoyScaleMax / (def->threshMinX - def->joyMinX);
    def->joyMultXH = JoyScaleMax / (def->joyMaxX - def->threshMaxX);
    def->joyMultYL = JoyScaleMax / (def->threshMinY - def->joyMinY);
@@ -413,9 +598,11 @@ void INL_SetJoyScale (word joy)
 void IN_SetupJoy (word joy, word minx, word maxx, word miny, word maxy)
 {
    word     d,r;
+   int      idx;
    JoystickDef *def;
 
-   def = &JoyDefs[joy];
+   idx = INL_NormalizeJoyIndex(joy);
+   def = &JoyDefs[idx];
 
    def->joyMinX = minx;
    def->joyMaxX = maxx;
@@ -431,7 +618,7 @@ void IN_SetupJoy (word joy, word minx, word maxx, word miny, word maxy)
    def->threshMinY = ((r / 2) - d) + miny;
    def->threshMaxY = ((r / 2) + d) + miny;
 
-   INL_SetJoyScale (joy);
+   INL_SetJoyScale ((word)idx);
 }
 
 
@@ -446,7 +633,23 @@ void IN_SetupJoy (word joy, word minx, word maxx, word miny, word maxy)
 boolean INL_StartJoy (word joy)
 {
    word x,y;
+   int idx;
 
+   idx = INL_NormalizeJoyIndex(joy);
+
+#ifdef __EMSCRIPTEN__
+   if ((idx < 0) || (idx >= MaxJoys))
+      return false;
+
+   /* Keep joystick available in web builds so controllers connected later work. */
+   JoysPresent[idx] = (idx == 0);
+   JoyAbsX[idx] = MaxJoyValue / 2;
+   JoyAbsY[idx] = MaxJoyValue / 2;
+   JoyButtonsState[idx] = 0;
+   IN_SetupJoy((word)idx, 0, MaxJoyValue, 0, MaxJoyValue);
+   INL_UpdateJoyState();
+   return JoysPresent[idx];
+#endif
    return false;
    
 #if USE_SDL
@@ -467,11 +670,11 @@ boolean INL_StartJoy (word joy)
        SDL_JoystickEventState(SDL_ENABLE);
    }
 
-   if (joy >= sdl_total_sticks) return (false);
-   sdl_joysticks[joy] = SDL_JoystickOpen (joy);
+   if (idx >= sdl_total_sticks) return (false);
+   sdl_joysticks[idx] = SDL_JoystickOpen (idx);
 #endif
 
-   IN_GetJoyAbs (joy, &x, &y);
+   IN_GetJoyAbs ((word)idx, &x, &y);
 
    if
    (
@@ -481,7 +684,7 @@ boolean INL_StartJoy (word joy)
       return(false);
    else
    {
-      IN_SetupJoy (joy, 0, x * 2, 0, y * 2);
+      IN_SetupJoy ((word)idx, 0, x * 2, 0, y * 2);
       return (true);
    }
 }
@@ -496,7 +699,11 @@ boolean INL_StartJoy (word joy)
 
 void INL_ShutJoy (word joy)
 {
-   JoysPresent[joy] = false;
+   int idx = INL_NormalizeJoyIndex(joy);
+   JoysPresent[idx] = false;
+   JoyAbsX[idx] = MaxJoyValue / 2;
+   JoyAbsY[idx] = MaxJoyValue / 2;
+   JoyButtonsState[idx] = 0;
   
 }
 
@@ -1047,7 +1254,16 @@ boolean IN_UserInput (long delay)
 byte IN_JoyButtons (void)
 {
    unsigned joybits = 0;
- 
+
+   INL_UpdateJoyState();
+
+   joybits |= (unsigned) (JoyButtonsState[0] & 0x03);
+#if MaxJoys > 1
+   joybits |= (unsigned) ((JoyButtonsState[1] & 0x03) << 2);
+#endif
+
+   if (joypadenabled)
+      joybits = (unsigned) (JoyButtonsState[0] & 0x0F);
 
    return (byte) joybits;
 }

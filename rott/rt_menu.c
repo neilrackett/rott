@@ -1648,6 +1648,9 @@ void CleanUpControlPanel (void)
 
    WriteConfig ();
 
+   if ((joystickport < 0) || (joystickport >= MaxJoys))
+      joystickport = 0;
+
    INL_GetJoyDelta (joystickport, &joyx, &joyy);
 
    if (mouseenabled)
@@ -4395,6 +4398,9 @@ int CalibrateJoystick
    int  status;
    boolean done;
 
+   if ((joystickport < 0) || (joystickport >= MaxJoys))
+      joystickport = 0;
+
    if ( joypadenabled )
       {
       // Gravis GamePad : Check all buttons
@@ -4881,6 +4887,8 @@ void ReadAnyControl (ControlInfo *ci)
    {
       int jx,jy,jb;
 
+      if ((joystickport < 0) || (joystickport >= MaxJoys))
+         joystickport = 0;
 
       INL_GetJoyDelta (joystickport, &jx, &jy);
 

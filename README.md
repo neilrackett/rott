@@ -38,11 +38,12 @@ Click on the link above. Play the game. That's it.
 
 The WebAssembly version of ROTT is built using [Emscripten](https://emscripten.org/).
 
-- Install the shareware version of ROTT for DOS using DOSbox, or [download the files from Internet.org](https://archive.org/details/rott_shareware)
-- Copy the files into a `build` folder in the root of this project
+- Install the shareware version of ROTT for DOS using DOSbox (or [download the files from Internet.org](https://archive.org/details/rott_shareware))
+- Create a `tmp` folder in the root of this project
+- Copy the `ROTT` folder you installed the DOS version into to the `tmp` folder (the actual folder, not just the contents)
 - Run `make`
 
-All of the files you need to deploy WebROTT will be in the `web/build` folder.
+All of the files you need to deploy WebROTT will be in the `build/wasm` folder.
 
 ## License
 

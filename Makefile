@@ -2,9 +2,9 @@ EMCC ?= emcc
 SRCDIR ?= rott
 OUTBASE ?= rott
 WEB_PORT ?= 8000
-BUILDDIR ?= web/build
-OBJDIR ?= web/obj
-DATADIR ?= build
+BUILDDIR ?= build/wasm
+OBJDIR ?= obj/wasm
+DATADIR ?= tmp/ROTT
 SHELLFILE ?= web/emscripten-shell.html
 
 CPPFLAGS := -I. -I$(SRCDIR) \

@@ -2,7 +2,6 @@
 *.o
 *.layout
 /build
+/data
 /obj
 /tmp
-/web/build
-/web/obj

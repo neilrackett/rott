@@ -1,49 +1,31 @@
-# Rise of the Triad
+# WebROTT: Rise of the Triad for the web
 
-Atari ST and WebAssembly (WASM) ports by [Neil Rackett](https://x.com/neilrackett)
+Ported by [Neil Rackett](https://x.com/neilrackett)
 
 ## Introduction
 
-What better way to celebrate the 30th-ish anniversary of ROTT than to port it to a hardware platform currently celebrating its 40th: Welcome to _Rise of the Triad for Atari ST_ (and TT and WebAssembly).
+<img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/1558c670-be05-427a-b1ce-1ee767a4870e" /> <img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/17067577-e151-4d6d-a9c6-69a1ef9d9837" />
 
-| Branch     | Name              | Description                                                          | Optimised for  | Compatibile with              | RAM | Compiler            |
-| ---------- | ----------------- | -------------------------------------------------------------------- | -------------- | ----------------------------- | --- | ------------------- |
-| `atari-st` | ROTT for Atari ST | C2P rendering, 16 colour and Noir (greyscale) versions               | Atari Mega STE | ST, STE, Mega STE, TT, Falcon | 4MB | m68k-atari-mint-gcc |
-| `atari-tt` | ROTT for Atari TT | SDL rendering, 16 colour (greyscale) on ST, 256 colours on TT/Falcon | Atari TT       | ST, STE, Mega STE, TT, Falcon | 4MB | m68k-atari-mint-gcc |
-| `wasm`     | ROTT for the web  | Web version using WebAssembly                                        | Web            | Any modern browser            | N/A | emcc                |
+After porting [Rise of the Triad (ROTT) to Atari ST](https://github.com/neilrackett/atarist-rott/releases), I thought it was only fair that I should create a version for those of you that, for whatever inexplicable reason, don't own any of Atari's late-80s or early-90s hardware.
 
-All builds are experimental.
-
-Enjoy!
-
-## Rise of the Triad for the web (WebROTT?)
-
-After creating the Atari ST and TT versions of ROTT, I thought it was only fair that I should create a version for those of you that, for whatever crazy reason, don't own any of Atari's late-80s or early-90s hardware.
-
-Welcome to WebROTT: all of the original features, no installation required.
+_Welcome to WebROTT: all of the original features, no installation required._
 
 [Click here to try it now!](https://labs.neilrackett.com/rott)
 
-## Screenshots
-
-<img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/1558c670-be05-427a-b1ce-1ee767a4870e" />
-
-<img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/17067577-e151-4d6d-a9c6-69a1ef9d9837" />
-
-## Installation
-
-Click on the link above. Play the game. That's it.
+Supports keyboard, mouse or joystick/gamepad controls.
 
 ## Build
 
-The WebAssembly version of ROTT is built using [Emscripten](https://emscripten.org/).
+You can build the WebAssembly version of ROTT using [Emscripten](https://emscripten.org/):
 
 - Install the shareware version of ROTT for DOS using DOSbox (or [download the files from Internet.org](https://archive.org/details/rott_shareware))
 - Create a `tmp` folder in the root of this project
 - Copy the `ROTT` folder you installed the DOS version into to the `tmp` folder (the actual folder, not just the contents)
 - Run `make`
 
-All of the files you need to deploy WebROTT will be in the `build/wasm` folder.
+All of the files you need to deploy WebROTT will be in the `build` folder, and you can play them locally by running `make serve` and opening http://localhost:8000 in your browser.
+
+The build process uses Emscripten's internal version of SDL, so there's no need to install any dependencies.
 
 ## License
 

@@ -2,8 +2,8 @@ EMCC ?= emcc
 SRCDIR ?= rott
 OUTBASE ?= rott
 WEB_PORT ?= 8000
-BUILDDIR ?= build/wasm
-OBJDIR ?= obj/wasm
+BUILDDIR ?= build
+OBJDIR ?= obj
 DATADIR ?= tmp/ROTT
 SHELLFILE ?= web/emscripten-shell.html
 

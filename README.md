@@ -18,7 +18,7 @@ Supports keyboard, mouse or joystick/gamepad controls.
 
 You can build the WebAssembly version of ROTT using [Emscripten](https://emscripten.org/):
 
-- Install the shareware version of ROTT for DOS using DOSbox (or [download the files from Internet.org](https://archive.org/details/rott_shareware))
+- Install the shareware version of ROTT for DOS using DOSbox (or [download the files from Archive.org](https://archive.org/details/rott_shareware))
 - Create a `tmp` folder in the root of this project
 - Copy the `ROTT` folder you installed the DOS version into to the `tmp` folder (the actual folder, not just the contents)
 - Run `make`

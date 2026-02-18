@@ -354,7 +354,9 @@ void GraphicsMode(void)
         window_flags |= SDL_WINDOW_FULLSCREEN;
     }
 
-    video_window = SDL_CreateWindow("Rise of the Triad",
+    const char *window_title = "Rise of the Triad | WebROTT by Neil Rackett";
+
+    video_window = SDL_CreateWindow(window_title,
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
                                     iGLOBAL_SCREENWIDTH,
@@ -362,7 +364,7 @@ void GraphicsMode(void)
                                     window_flags);
     if ((video_window == NULL) && sdl_fullscreen)
     {
-        video_window = SDL_CreateWindow("Rise of the Triad",
+        video_window = SDL_CreateWindow(window_title,
                                         SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED,
                                         iGLOBAL_SCREENWIDTH,

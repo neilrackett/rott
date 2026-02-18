@@ -1,11 +1,13 @@
 EMCC ?= emcc
-SRCDIR ?= rott
+SRCDIR ?= src
 OUTBASE ?= rott
 WEB_PORT ?= 8000
 BUILDDIR ?= build
 OBJDIR ?= obj
 DATADIR ?= tmp/ROTT
-SHELLFILE ?= web/emscripten-shell.html
+SHELLFILE ?= $(SRCDIR)/emscripten-shell.html
+FAVICON_SRC ?= $(SRCDIR)/favicon.ico
+FAVICON_DST ?= $(BUILDDIR)/favicon.ico
 
 CPPFLAGS := -I. -I$(SRCDIR) \
 	-DPLATFORM_UNIX=1 \
@@ -95,19 +97,24 @@ SRC := \
 
 OBJ := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
 
-all: $(BUILDDIR)/$(OUTBASE).html
+all: $(BUILDDIR)/$(OUTBASE).html $(FAVICON_DST)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(EMCC) $(CPPFLAGS) $(CFLAGS) $(SDLFLAGS) -c $< -o $@
 
-$(BUILDDIR)/$(OUTBASE).html: $(OBJ) | $(OBJDIR)
-	mkdir -p $(BUILDDIR)
+$(BUILDDIR)/$(OUTBASE).html: $(OBJ) | $(OBJDIR) $(BUILDDIR)
 	$(EMCC) $(OBJ) $(EMFLAGS) --shell-file $(SHELLFILE) $(PRELOAD) -o $@
 
-serve: $(BUILDDIR)/$(OUTBASE).html
+$(FAVICON_DST): $(FAVICON_SRC) | $(BUILDDIR)
+	cp $< $@
+
+serve: $(BUILDDIR)/$(OUTBASE).html $(FAVICON_DST)
 	@echo "Serving http://localhost:$(WEB_PORT)/$(OUTBASE).html from $(BUILDDIR)"
 	@if command -v npx >/dev/null 2>&1; then \
 		cd $(BUILDDIR) && npx serve -p $(WEB_PORT); \

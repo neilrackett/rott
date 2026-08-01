@@ -10,7 +10,7 @@ After porting [Rise of the Triad (ROTT) to Atari ST](https://github.com/neilrack
 
 _Welcome to WebROTT: all of the original features, no installation required._
 
-[Click here to try it now!](https://labs.neilrackett.com/rott)
+[Click here to try it now!](https://labs.neilrackett.com/web-rott)
 
 Supports keyboard, mouse or joystick/gamepad controls.
 

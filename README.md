@@ -1,18 +1,18 @@
 # WebROTT: Rise of the Triad for the web
 
-Ported by [Neil Rackett](https://x.com/neilrackett)
+Ported by [Mesmotronic](https://x.com/mesmotronic)
 
 ## Introduction
 
 <img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/1558c670-be05-427a-b1ce-1ee767a4870e" /> <img width="638" height="397" alt="image" src="https://github.com/user-attachments/assets/17067577-e151-4d6d-a9c6-69a1ef9d9837" />
 
-After porting [Rise of the Triad (ROTT) to Atari ST](https://github.com/neilrackett/atarist-rott/releases), I thought it was only fair that I should create a version for those of you that, for whatever inexplicable reason, don't own any of Atari's late-80s or early-90s hardware.
-
 _Welcome to WebROTT: all of the original features, no installation required._
 
-[Click here to try it now!](https://labs.neilrackett.com/web-rott)
+[Click here to try it now!](https://labs.mesmotronic.com/web-rott)
 
 Supports keyboard, mouse or joystick/gamepad controls.
+
+Too modern for you? Then why not check out [Neil Rackett](https://neilrackett.com)'s [Atari ST port of Rise of the Triad (ROTT)](https://github.com/neilrackett/atarist-rott/releases).
 
 ## Build
 
